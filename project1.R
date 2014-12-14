@@ -1,4 +1,8 @@
-setwd("C:/Users/Victor/Desktop/datascicour51")
+setwd("C:/Users/Victor/Desktop/coursera/RepData_PeerAssessment1")
+
+Sys.setlocale("LC_TIME", "English")
+
+library(ggplot2)
 
 activity <- read.csv("./activity.csv",stringsAsFactors=F)
 
@@ -6,11 +10,12 @@ activity$date <- as.Date(activity$date)
 
 # Q1
 
-hist(na.omit(activity$steps))
+dailyStep <- aggregate(steps ~ date, activity, sum, na.rm=T)
 
-dailymean <- aggregate(steps ~ date, activity, mean, na.rm=T)
+plot(dailyStep,type="h")
 
-dailymedian <- aggregate(steps ~ date, activity, median, na.rm=T)
+mean(dailyStep$steps)
+median(dailyStep$steps)
 
 # Q2
 
@@ -18,7 +23,7 @@ averageInterval <- aggregate(steps ~ interval, activity, mean, na.rm=T)
 
 plot(averageInterval,type="l",main="Avg Steps Taken on Each Interval")
 
-max(averageInterval$steps)
+averageInterval[averageInterval$steps==max(averageInterval$steps),1] # interval 835
 
 # Q3
 
@@ -39,10 +44,40 @@ for(i in 1:nrow(activityFilled)){
         }
 }
 
-hist(activityFilled$steps)
+dailyStepFilled <- aggregate(steps ~ date, activityFilled, sum, na.rm=T)
 
-dailymeanFilled <- aggregate(steps ~ date, activityFilled, mean)
+plot(dailyStepFilled,type="h")
 
-dailymedianFilled <- aggregate(steps ~ date, activityFilled, median)
+mean(dailyStepFilled$steps)
+median(dailyStepFilled$steps)
 
+# Q4
 
+day <- weekdays(activityFilled$date)
+
+weekday <- c()
+
+for (i in 1:length(day)){
+        if(day[i]=="Saturday" | day[i]=="Sunday"){
+                weekday <- c(weekday,"weekend")
+        } else {
+                weekday <- c(weekday,"weekday")
+        }
+}
+
+weekday <- as.factor(weekday)
+
+activityFilled <- cbind(activityFilled,weekday)
+
+averageWeekday <- aggregate(steps ~ interval, activity[weekday=="weekday",], mean)
+
+averageWeekday$weekday="weekday"
+
+averageWeekend <- aggregate(steps ~ interval, activity[weekday=="weekend",], mean)
+averageWeekend$weekday="weekend"
+
+averaged <- averageWeekday
+
+averaged <- rbind(averaged,averageWeekend)
+
+qplot(interval,steps,data=averaged,color=weekday,facets=weekday~.) + geom_line()
